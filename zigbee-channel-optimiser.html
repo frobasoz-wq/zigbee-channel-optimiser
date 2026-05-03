@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zigbee Channel Optimiser — zigbee.com.au</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #C8DCF0;
+    --bg-card: #FFFFFF;
+    --bg-card2: #EBF3FA;
+    --bg-card3: #F0F6FB;
+    --electric: #0077CC;
+    --electric-light: rgba(0,119,204,0.10);
+    --electric-mid: rgba(0,119,204,0.20);
+    --zigbee-red: #E8003D;
+    --router-green: #5A8A6A;
+    --yes-bg: #EAF7EE;
+    --yes-border: #5A9A6A;
+    --yes-text: #1A5A2A;
+    --caveat-bg: #FFF8E8;
+    --caveat-border: #D4960A;
+    --caveat-text: #6A4800;
+    --no-bg: #FDEEF2;
+    --no-border: #E8003D;
+    --no-text: #7A0020;
+    --text-dark: #141E30;
+    --text-mid: #3A4A60;
+    --text-light: #6A7A90;
+    --border: #C0D0E0;
+    --shadow: rgba(20,40,80,0.10);
+    --wifi-color: #E8003D;
+    --wifi-bg: rgba(232,0,61,0.12);
+    --zigbee-safe: #5A9A6A;
+    --zigbee-safe-bg: rgba(90,154,106,0.15);
+    --zigbee-warn: #D4960A;
+    --zigbee-warn-bg: rgba(212,150,10,0.13);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text-dark);
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(circle, rgba(0,119,204,0.07) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none; z-index: 0;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .tool-wrapper {
+    position: relative; z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 34px 20px 48px;
+  }
+
+  /* ── HEADER ── */
+  .tool-header {
+    text-align: center;
+    margin-bottom: 28px;
+    animation: fadeDown 0.6s ease both;
+  }
+  .tool-brand {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--electric); margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .tool-brand::before, .tool-brand::after {
+    content: ''; width: 30px; height: 1px;
+    background: var(--electric); opacity: 0.4;
+  }
+  .tool-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(24px, 4.5vw, 38px);
+    font-weight: 800; line-height: 1.1;
+    color: var(--text-dark); margin-bottom: 10px;
+  }
+  .tool-title span { color: var(--electric); }
+  .tool-subtitle {
+    font-size: 15.5px; color: var(--text-mid);
+    max-width: 520px; margin: 0 auto; line-height: 1.55;
+  }
+
+  /* ── STEP INDICATOR ── */
+  .step-wrap {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; margin-bottom: 24px;
+    animation: fadeDown 0.6s 0.1s ease both;
+  }
+  .step-dot {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--bg-card); border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    color: var(--text-light); transition: all 0.3s; position: relative; z-index: 1;
+  }
+  .step-dot.active { background: var(--electric); border-color: var(--electric); color: #fff; box-shadow: 0 0 0 4px var(--electric-light); }
+  .step-dot.done   { background: var(--router-green); border-color: var(--router-green); color: #fff; }
+  .step-dot.done .snum { display: none; }
+  .step-dot.done::after { content: '✓'; font-size: 14px; }
+  .step-lbl {
+    font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-light);
+    position: absolute; bottom: -20px; white-space: nowrap;
+    left: 50%; transform: translateX(-50%);
+  }
+  .step-dot.active .step-lbl { color: var(--electric); }
+  .step-dot.done .step-lbl   { color: var(--router-green); }
+  .step-line { width: 52px; height: 2px; background: var(--border); transition: background 0.3s; }
+  .step-line.done { background: var(--router-green); }
+
+  /* ── CARD ── */
+  .tool-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 18px; padding: 32px 34px 28px;
+    box-shadow: 0 4px 24px var(--shadow);
+    animation: slideUp 0.4s cubic-bezier(0.4,0,0.2,1) both;
+  }
+  .card-eyebrow {
+    font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--electric); margin-bottom: 8px;
+  }
+  .card-question {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(17px, 2.6vw, 22px); font-weight: 700;
+    color: var(--text-dark); margin-bottom: 6px; line-height: 1.3;
+  }
+  .card-hint {
+    font-size: 14px; color: var(--text-light);
+    margin-bottom: 22px; line-height: 1.5;
+  }
+
+  /* ── OPTIONS ── */
+  .options-grid { display: grid; gap: 10px; }
+  .cols-3 { grid-template-columns: repeat(3,1fr); }
+  .cols-2 { grid-template-columns: repeat(2,1fr); }
+  .cols-1 { grid-template-columns: 1fr; }
+
+  @media(max-width:520px){
+    .cols-3,.cols-2 { grid-template-columns: 1fr; }
+  }
+
+  .opt-btn {
+    display: flex; align-items: center; gap: 11px;
+    padding: 13px 16px;
+    background: var(--bg-card2); border: 1.5px solid var(--border);
+    border-radius: 11px; cursor: pointer; transition: all 0.18s;
+    text-align: left; font-family: 'DM Sans', sans-serif;
+    font-size: 14.5px; font-weight: 500; color: var(--text-dark); line-height: 1.3;
+  }
+  .opt-btn:hover { border-color: var(--electric); background: var(--electric-light); transform: translateY(-1px); box-shadow: 0 3px 12px rgba(0,119,204,0.12); }
+  .opt-btn.selected { border-color: var(--electric); background: var(--electric-light); box-shadow: 0 0 0 1px var(--electric); }
+  .opt-emoji { font-size: 20px; flex-shrink: 0; }
+  .opt-check {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 1.5px solid var(--border); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.18s; margin-left: auto;
+  }
+  .opt-btn.selected .opt-check { background: var(--electric); border-color: var(--electric); }
+  .opt-btn.selected .opt-check::after { content: '✓'; font-size: 10px; color: #fff; font-weight: 700; }
+
+  /* Channel buttons */
+  .channel-grid {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px;
+  }
+  .ch-btn {
+    width: 52px; height: 52px; border-radius: 10px;
+    background: var(--bg-card2); border: 1.5px solid var(--border);
+    cursor: pointer; transition: all 0.18s;
+    font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700;
+    color: var(--text-dark); display: flex; align-items: center; justify-content: center;
+  }
+  .ch-btn:hover { border-color: var(--electric); background: var(--electric-light); transform: scale(1.06); }
+  .ch-btn.selected { background: var(--electric); border-color: var(--electric); color: #fff; box-shadow: 0 3px 12px rgba(0,119,204,0.3); }
+  .ch-btn.selected2 { background: #E8003D; border-color: #E8003D; color: #fff; box-shadow: 0 3px 12px rgba(232,0,61,0.25); }
+
+  /* "I don't know" help box */
+  .help-box {
+    margin-top: 16px;
+    background: var(--bg-card2); border: 1.5px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+  }
+  .help-toggle {
+    width: 100%; padding: 13px 18px;
+    background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    color: var(--electric); text-align: left;
+  }
+  .help-toggle-arrow { transition: transform 0.25s; font-size: 12px; }
+  .help-toggle.open .help-toggle-arrow { transform: rotate(180deg); }
+  .help-body { display: none; padding: 4px 18px 16px; }
+  .help-body.open { display: block; }
+  .help-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .help-item:last-child { border-bottom: none; }
+  .help-icon { font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; margin-top: 2px; }
+  .help-os { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--text-dark); margin-bottom: 3px; }
+  .help-steps { font-size: 13.5px; color: var(--text-mid); line-height: 1.55; }
+  .help-steps code {
+    background: var(--bg-card3); border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 6px; font-size: 12px;
+    font-family: monospace; color: var(--electric);
+  }
+
+  /* NAV */
+  .nav-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 24px; gap: 12px;
+  }
+  .btn-back {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--text-light); background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; gap: 5px; transition: color 0.18s; padding: 10px 0;
+  }
+  .btn-back:hover { color: var(--text-dark); }
+  .btn-next {
+    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+    color: #fff; background: linear-gradient(135deg, var(--electric), #00AADE);
+    border: none; border-radius: 10px; padding: 13px 32px; cursor: pointer;
+    transition: all 0.18s; box-shadow: 0 3px 14px rgba(0,119,204,0.28);
+    display: flex; align-items: center; gap: 7px;
+  }
+  .btn-next:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 5px 20px rgba(0,119,204,0.38); }
+  .btn-next:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* ── RESULT ── */
+  .result-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 18px; padding: 32px 34px 28px;
+    box-shadow: 0 4px 24px var(--shadow);
+    animation: popIn 0.45s cubic-bezier(0.4,0,0.2,1) both;
+  }
+
+  /* Spectrum diagram */
+  .spectrum-wrap {
+    margin-bottom: 24px;
+    background: var(--bg-card2); border: 1.5px solid var(--border);
+    border-radius: 14px; padding: 20px 16px 16px; overflow-x: auto;
+  }
+  .spectrum-title {
+    font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--text-light); margin-bottom: 14px; text-align: center;
+  }
+  .spectrum-svg-wrap { min-width: 580px; }
+
+  /* Recommendations */
+  .rec-grid { display: grid; gap: 12px; margin-bottom: 22px; }
+
+  .rec-card {
+    border-radius: 12px; padding: 18px 20px;
+    border: 1.5px solid;
+  }
+  .rec-card.best {
+    background: var(--yes-bg); border-color: var(--yes-border);
+  }
+  .rec-card.good {
+    background: var(--caveat-bg); border-color: var(--caveat-border);
+  }
+  .rec-card.avoid {
+    background: var(--no-bg); border-color: var(--no-border);
+  }
+  .rec-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+  }
+  .rec-ch-badge {
+    font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800;
+    min-width: 70px; text-align: center;
+    padding: 6px 10px; border-radius: 8px;
+  }
+  .best .rec-ch-badge  { background: var(--yes-border); color: #fff; }
+  .good .rec-ch-badge  { background: var(--caveat-border); color: #fff; }
+  .avoid .rec-ch-badge { background: var(--no-border); color: #fff; }
+
+  .rec-label {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .best .rec-label  { color: var(--yes-text); }
+  .good .rec-label  { color: var(--caveat-text); }
+  .avoid .rec-label { color: var(--no-text); }
+
+  .rec-body { font-size: 14.5px; line-height: 1.7; }
+  .best .rec-body  { color: var(--yes-text); }
+  .good .rec-body  { color: var(--caveat-text); }
+  .avoid .rec-body { color: var(--no-text); }
+  .rec-body strong { font-weight: 600; }
+
+  /* Hub instructions accordion */
+  .hub-section { margin-bottom: 22px; }
+  .hub-section-title {
+    font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--text-light); margin-bottom: 10px;
+  }
+  .hub-accordion { display: grid; gap: 8px; }
+  .hub-item {
+    background: var(--bg-card2); border: 1.5px solid var(--border);
+    border-radius: 11px; overflow: hidden;
+  }
+  .hub-toggle {
+    width: 100%; padding: 13px 16px;
+    background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'DM Sans', sans-serif; font-size: 14.5px; font-weight: 600;
+    color: var(--text-dark); text-align: left; gap: 10px;
+  }
+  .hub-toggle:hover { background: var(--electric-light); }
+  .hub-toggle-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .hub-arrow { font-size: 12px; color: var(--text-light); transition: transform 0.25s; }
+  .hub-item.open .hub-arrow { transform: rotate(180deg); }
+  .hub-badge {
+    font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 100px; flex-shrink: 0;
+  }
+  .hub-badge.changeable  { background: var(--yes-bg); color: var(--yes-text); border: 1px solid var(--yes-border); }
+  .hub-badge.automatic   { background: var(--caveat-bg); color: var(--caveat-text); border: 1px solid var(--caveat-border); }
+  .hub-badge.locked      { background: var(--no-bg); color: var(--no-text); border: 1px solid var(--no-border); }
+  .hub-body { display: none; padding: 4px 16px 16px; }
+  .hub-item.open .hub-body { display: block; }
+  .hub-steps { font-size: 14px; color: var(--text-mid); line-height: 1.75; }
+  .hub-steps ol { padding-left: 18px; }
+  .hub-steps li { margin-bottom: 4px; }
+  .hub-steps code {
+    background: var(--bg-card3); border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 6px; font-size: 12px;
+    font-family: monospace; color: var(--electric);
+  }
+  .hub-note {
+    margin-top: 10px; padding: 10px 14px;
+    background: var(--caveat-bg); border: 1px solid var(--caveat-border);
+    border-radius: 8px; font-size: 13px; color: var(--caveat-text); line-height: 1.5;
+  }
+
+  /* Divider / footer */
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+  .nextsteps-title {
+    font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--text-light); margin-bottom: 10px;
+  }
+  .nextsteps-grid { display: grid; gap: 8px; margin-bottom: 20px; }
+  .nextstep-link {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; background: var(--bg-card2);
+    border: 1.5px solid var(--border); border-radius: 11px;
+    text-decoration: none; color: var(--text-dark); font-size: 14.5px;
+    transition: all 0.18s; line-height: 1.3;
+  }
+  .nextstep-link:hover { border-color: var(--electric); background: var(--electric-light); transform: translateX(3px); }
+  .nextstep-section {
+    font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--electric); display: block; margin-bottom: 1px;
+  }
+  .nextstep-icon { font-size: 17px; flex-shrink: 0; width: 26px; text-align: center; }
+  .nextstep-arrow { margin-left: auto; color: var(--electric); opacity: 0.45; font-size: 14px; flex-shrink: 0; }
+
+  .btn-secondary {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--text-mid); background: none; border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 11px 20px; cursor: pointer;
+    transition: all 0.18s; text-align: center; width: 100%;
+  }
+  .btn-secondary:hover { border-color: var(--electric); color: var(--electric); }
+
+  .tool-footer {
+    text-align: center; margin-top: 20px; font-size: 12px; color: var(--text-light);
+    animation: fadeDown 0.6s 0.3s ease both;
+  }
+  .tool-footer a { color: var(--electric); text-decoration: none; }
+
+  @media(max-width:600px){
+    .tool-card,.result-card { padding: 22px 18px 20px; }
+    .tool-wrapper { padding: 20px 14px 32px; }
+  }
+</style>
+</head>
+<body>
+<div class="tool-wrapper">
+
+  <div class="tool-header">
+    <div class="tool-brand">zigbee.com.au</div>
+    <h1 class="tool-title">Zigbee Channel<br><span>Optimiser</span></h1>
+    <p class="tool-subtitle">Answer four quick questions and we'll find the best Zigbee channel for your home — reducing interference and improving reliability.</p>
+  </div>
+
+  <div class="step-wrap" id="stepWrap">
+    <div class="step-dot active" id="sd1" style="position:relative"><span class="snum">1</span><span class="step-lbl">Region</span></div>
+    <div class="step-line" id="sl1"></div>
+    <div class="step-dot" id="sd2" style="position:relative"><span class="snum">2</span><span class="step-lbl">Your WiFi</span></div>
+    <div class="step-line" id="sl2"></div>
+    <div class="step-dot" id="sd3" style="position:relative"><span class="snum">3</span><span class="step-lbl">2nd Network</span></div>
+    <div class="step-line" id="sl3"></div>
+    <div class="step-dot" id="sd4" style="position:relative"><span class="snum">4</span><span class="step-lbl">Neighbours</span></div>
+    <div class="step-line" id="sl4"></div>
+    <div class="step-dot" id="sd5" style="position:relative"><span class="snum">5</span><span class="step-lbl">Result</span></div>
+  </div>
+
+  <div id="toolArea"></div>
+
+  <div class="tool-footer">
+    Built for beginners by <a href="https://zigbee.com.au">zigbee.com.au</a> — your Zigbee smart home guide.
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+const state = {
+  region: null,       // 'americas' | 'europe' | 'japan'
+  wifiCh: null,       // number or 'unknown'
+  wifiCh2: null,      // number or 'none'
+  neighbours: null,   // 'none' | 'few' | 'many'
+  maxWifi: 11,
+};
+
+// ── ZIGBEE/WIFI INTERFERENCE MAP ──
+// For each WiFi channel, which Zigbee channels (11-26) does it overlap?
+function getWifiInterference(wifiCh) {
+  // WiFi channels occupy ~22MHz bandwidth centred on their frequency.
+  // Zigbee channels occupy 5MHz slots. Overlap mapped empirically:
+  const map = {
+    1:  [11,12,13],
+    2:  [12,13,14],
+    3:  [13,14,15],
+    4:  [14,15,16],
+    5:  [15,16,17],
+    6:  [16,17,18],
+    7:  [17,18,19],
+    8:  [18,19,20],
+    9:  [19,20,21],
+    10: [20,21,22],
+    11: [21,22,23],
+    12: [22,23,24],
+    13: [23,24,25],
+    14: [24,25,26],
+  };
+  return map[wifiCh] || [];
+}
+
+function getAllInterference() {
+  const affected = new Set();
+  const channels = [];
+  if (state.wifiCh && state.wifiCh !== 'unknown') channels.push(state.wifiCh);
+  if (state.wifiCh2 && state.wifiCh2 !== 'none') channels.push(state.wifiCh2);
+  channels.forEach(ch => getWifiInterference(parseInt(ch)).forEach(z => affected.add(z)));
+  return affected;
+}
+
+function getRankedZigbeeChannels() {
+  const affected = getAllInterference();
+  const neighbours = state.neighbours;
+  // Candidate Zigbee channels
+  const candidates = [11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26];
+  // Score each: 0=safe, 1=partial, 2=avoid
+  return candidates.map(zch => {
+    let score = affected.has(zch) ? 2 : 0;
+    // If many neighbours, be more conservative — also mark adjacent as partial
+    if (neighbours === 'many' && !affected.has(zch)) {
+      // check if adjacent channels are affected
+      if (affected.has(zch-1) || affected.has(zch+1)) score = 1;
+    }
+    return { ch: zch, score };
+  });
+}
+
+function getTopRecommendations() {
+  const ranked = getRankedZigbeeChannels();
+  const affected = getAllInterference();
+  const neighbours = state.neighbours;
+
+  // Best candidates: unaffected, prefer 15, 20, 25, 26
+  const preferred = [25, 26, 20, 15];
+  const recs = [];
+
+  for (const p of preferred) {
+    const entry = ranked.find(r => r.ch === p);
+    if (entry && entry.score === 0) {
+      recs.push(p);
+      if (recs.length === 2) break;
+    }
+  }
+  // If not enough, fill from any safe channel
+  if (recs.length < 2) {
+    for (const r of [...ranked].sort((a,b) => a.score - b.score)) {
+      if (!recs.includes(r.ch) && r.score === 0) {
+        recs.push(r.ch);
+        if (recs.length === 2) break;
+      }
+    }
+  }
+  // If still none safe, pick least-bad
+  if (recs.length === 0) {
+    const best = [...ranked].sort((a,b) => a.score - b.score);
+    recs.push(best[0].ch);
+  }
+  return recs;
+}
+
+// ── STEPS UPDATE ──
+function updateSteps(active) {
+  const ids = ['sd1','sd2','sd3','sd4','sd5'];
+  const lines = ['sl1','sl2','sl3','sl4'];
+  ids.forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.className = 'step-dot';
+    if (i + 1 < active) el.classList.add('done');
+    else if (i + 1 === active) el.classList.add('active');
+  });
+  lines.forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.className = 'step-line';
+    if (i + 1 < active) el.classList.add('done');
+  });
+}
+
+// ── HELP BOX: HOW TO FIND WIFI CHANNEL ──
+function helpBoxHTML() {
+  return `
+  <div class="help-box">
+    <button class="help-toggle" onclick="toggleHelp(this)">
+      🔍 How do I find my WiFi channel?
+      <span class="help-toggle-arrow">▼</span>
+    </button>
+    <div class="help-body">
+      <div class="help-item">
+        <div class="help-icon">🪟</div>
+        <div>
+          <div class="help-os">Windows</div>
+          <div class="help-steps">Click the WiFi icon in your taskbar → <code>Properties</code> on your network → scroll down to find <code>Network channel</code></div>
+        </div>
+      </div>
+      <div class="help-item">
+        <div class="help-icon">🍎</div>
+        <div>
+          <div class="help-os">Mac</div>
+          <div class="help-steps">Hold <code>Option</code> and click the WiFi icon in the menu bar → your channel is shown next to <code>Channel</code></div>
+        </div>
+      </div>
+      <div class="help-item">
+        <div class="help-icon">📱</div>
+        <div>
+          <div class="help-os">iPhone</div>
+          <div class="help-steps">Go to <code>Settings → WiFi</code> → tap the <code>ⓘ</code> icon next to your network → scroll to find the channel number</div>
+        </div>
+      </div>
+      <div class="help-item">
+        <div class="help-icon">🤖</div>
+        <div>
+          <div class="help-os">Android</div>
+          <div class="help-steps">Download the free app <code>WiFi Analyser</code> (by farproc) → it shows all nearby networks and their channels on a live graph</div>
+        </div>
+      </div>
+      <div class="help-item">
+        <div class="help-icon">🌐</div>
+        <div>
+          <div class="help-os">Router admin page</div>
+          <div class="help-steps">Open a browser and go to <code>192.168.1.1</code> or <code>192.168.0.1</code> → log in (check the sticker on your router for credentials) → find <code>Wireless Settings → 2.4GHz channel</code></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleHelp(btn) {
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+}
+
+function toggleHub(el) {
+  el.classList.toggle('open');
+}
+
+// ── RENDER: Q1 REGION ──
+function renderQ1() {
+  updateSteps(1);
+  document.getElementById('toolArea').innerHTML = `
+  <div class="tool-card">
+    <div class="card-eyebrow">Step 1 of 4</div>
+    <div class="card-question">Where in the world are you?</div>
+    <div class="card-hint">This determines which WiFi channels are used in your region — which directly affects which Zigbee channels are safe.</div>
+    <div class="options-grid cols-1">
+      <button class="opt-btn${state.region==='americas'?' selected':''}" onclick="selectRegion('americas',11)">
+        <span class="opt-emoji">🌎</span>
+        <span><strong>Americas</strong> — USA, Canada, Mexico, South America<br><span style="font-size:13px;color:var(--text-light)">WiFi channels 1–11 available</span></span>
+        <span class="opt-check"></span>
+      </button>
+      <button class="opt-btn${state.region==='europe'?' selected':''}" onclick="selectRegion('europe',13)">
+        <span class="opt-emoji">🌍</span>
+        <span><strong>Europe, Australia, UK & Asia</strong> — most of the world<br><span style="font-size:13px;color:var(--text-light)">WiFi channels 1–13 available</span></span>
+        <span class="opt-check"></span>
+      </button>
+      <button class="opt-btn${state.region==='japan'?' selected':''}" onclick="selectRegion('japan',14)">
+        <span class="opt-emoji">🌏</span>
+        <span><strong>Japan</strong><br><span style="font-size:13px;color:var(--text-light)">WiFi channels 1–14 available</span></span>
+        <span class="opt-check"></span>
+      </button>
+    </div>
+    <div class="nav-row">
+      <span></span>
+      <button class="btn-next" id="btnNext1" onclick="renderQ2()" ${state.region?'':'disabled'}>Next →</button>
+    </div>
+  </div>`;
+}
+
+function selectRegion(r, max) {
+  state.region = r;
+  state.maxWifi = max;
+  document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  document.getElementById('btnNext1').disabled = false;
+}
+
+// ── RENDER: Q2 YOUR WIFI CHANNEL ──
+function renderQ2() {
+  updateSteps(2);
+  const max = state.maxWifi;
+  const channels = Array.from({length: max}, (_, i) => i + 1);
+  const chButtons = channels.map(c =>
+    `<button class="ch-btn${state.wifiCh===c?' selected':''}" onclick="selectCh1(${c})">${c}</button>`
+  ).join('');
+
+  document.getElementById('toolArea').innerHTML = `
+  <div class="tool-card">
+    <div class="card-eyebrow">Step 2 of 4</div>
+    <div class="card-question">What 2.4GHz channel is your router on?</div>
+    <div class="card-hint">Select only your <strong>2.4GHz</strong> channel — ignore 5GHz and 6GHz, they don't affect Zigbee. Common home router channels are <strong>1, 6</strong> or <strong>11</strong>.</div>
+    <div class="channel-grid">${chButtons}
+      <button class="ch-btn${state.wifiCh==='unknown'?' selected':''}"
+        style="width:auto;padding:0 14px;font-size:13px;font-weight:600;"
+        onclick="selectCh1('unknown')">❓ Don't know</button>
+    </div>
+    ${helpBoxHTML()}
+    <div class="nav-row">
+      <button class="btn-back" onclick="renderQ1()">← Back</button>
+      <button class="btn-next" id="btnNext2" onclick="renderQ3()" ${state.wifiCh!==null?'':'disabled'}>Next →</button>
+    </div>
+  </div>`;
+}
+
+function selectCh1(ch) {
+  state.wifiCh = ch;
+  document.querySelectorAll('.ch-btn').forEach(b => b.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  document.getElementById('btnNext2').disabled = false;
+}
+
+// ── RENDER: Q3 SECOND NETWORK ──
+function renderQ3() {
+  updateSteps(3);
+  const max = state.maxWifi;
+  const channels = Array.from({length: max}, (_, i) => i + 1);
+  const chButtons = channels.map(c =>
+    `<button class="ch-btn${state.wifiCh2===c?' selected2':''}" onclick="selectCh2(${c})">${c}</button>`
+  ).join('');
+
+  document.getElementById('toolArea').innerHTML = `
+  <div class="tool-card">
+    <div class="card-eyebrow">Step 3 of 4</div>
+    <div class="card-question">Do you have a second 2.4GHz network?</div>
+    <div class="card-hint">This includes guest networks, mesh nodes, or a second router running on a different channel. If you're not sure, choose <strong>No second network</strong>.</div>
+    <div class="options-grid cols-1" style="margin-bottom:14px;">
+      <button class="opt-btn${state.wifiCh2==='none'?' selected':''}" onclick="selectCh2('none')">
+        <span class="opt-emoji">✖️</span>
+        <span>No second network</span>
+        <span class="opt-check"></span>
+      </button>
+    </div>
+    <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-light);margin-bottom:10px;">Or select its channel:</div>
+    <div class="channel-grid">${chButtons}</div>
+    <div class="nav-row">
+      <button class="btn-back" onclick="renderQ2()">← Back</button>
+      <button class="btn-next" id="btnNext3" onclick="renderQ4()" ${state.wifiCh2!==null?'':'disabled'}>Next →</button>
+    </div>
+  </div>`;
+}
+
+function selectCh2(ch) {
+  state.wifiCh2 = ch;
+  if (ch === 'none') {
+    document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+    event.currentTarget.classList.add('selected');
+    document.querySelectorAll('.ch-btn').forEach(b => b.classList.remove('selected2'));
+  } else {
+    document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.ch-btn').forEach(b => b.classList.remove('selected2'));
+    event.currentTarget.classList.add('selected2');
+  }
+  document.getElementById('btnNext3').disabled = false;
+}
+
+// ── RENDER: Q4 NEIGHBOURS ──
+function renderQ4() {
+  updateSteps(4);
+  document.getElementById('toolArea').innerHTML = `
+  <div class="tool-card">
+    <div class="card-eyebrow">Step 4 of 4</div>
+    <div class="card-question">How many neighbour WiFi networks can you see?</div>
+    <div class="card-hint">Check your phone or laptop's WiFi list — count how many <strong>2.4GHz networks</strong> appear that aren't yours. In dense areas, neighbour interference can affect Zigbee reliability.</div>
+    <div class="options-grid cols-1">
+      <button class="opt-btn${state.neighbours==='none'?' selected':''}" onclick="selectNeighbours('none',this)">
+        <span class="opt-emoji">🏡</span>
+        <span><strong>None or just one</strong> — rural or large block<br><span style="font-size:13px;color:var(--text-light)">Minimal external interference</span></span>
+        <span class="opt-check"></span>
+      </button>
+      <button class="opt-btn${state.neighbours==='few'?' selected':''}" onclick="selectNeighbours('few',this)">
+        <span class="opt-emoji">🏘️</span>
+        <span><strong>A few (2–5 networks)</strong> — typical suburban street<br><span style="font-size:13px;color:var(--text-light)">Some external interference possible</span></span>
+        <span class="opt-check"></span>
+      </button>
+      <button class="opt-btn${state.neighbours==='many'?' selected':''}" onclick="selectNeighbours('many',this)">
+        <span class="opt-emoji">🏢</span>
+        <span><strong>Many (6+ networks)</strong> — apartment block or dense area<br><span style="font-size:13px;color:var(--text-light)">High interference — we'll be more conservative</span></span>
+        <span class="opt-check"></span>
+      </button>
+    </div>
+    <div class="nav-row">
+      <button class="btn-back" onclick="renderQ3()">← Back</button>
+      <button class="btn-next" id="btnNext4" onclick="renderResult()" ${state.neighbours?'':'disabled'}>See My Results →</button>
+    </div>
+  </div>`;
+}
+
+function selectNeighbours(val, btn) {
+  state.neighbours = val;
+  document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('btnNext4').disabled = false;
+}
+
+// ── RENDER RESULT ──
+function renderResult() {
+  updateSteps(5);
+  const affected = getAllInterference();
+  const ranked = getRankedZigbeeChannels();
+  const topRecs = getTopRecommendations();
+  const wifiChannels = [];
+  if (state.wifiCh && state.wifiCh !== 'unknown') wifiChannels.push(parseInt(state.wifiCh));
+  if (state.wifiCh2 && state.wifiCh2 !== 'none') wifiChannels.push(parseInt(state.wifiCh2));
+
+  // Build SVG spectrum
+  const svgHTML = buildSpectrum(ranked, wifiChannels, topRecs);
+
+  // Build recommendation cards
+  const recCards = buildRecCards(topRecs, affected);
+
+  // Build hub instructions
+  const hubHTML = buildHubInstructions(topRecs[0]);
+
+  // Context summary
+  const wifiSummary = state.wifiCh === 'unknown'
+    ? 'WiFi channel unknown — showing safest options'
+    : `Your WiFi: Channel${wifiChannels.length > 1 ? 's' : ''} ${wifiChannels.join(' & ')}`;
+
+  document.getElementById('toolArea').innerHTML = `
+  <div class="result-card">
+    <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--electric);margin-bottom:12px;">Your Zigbee Channel Results</div>
+    <div style="font-family:'Syne',sans-serif;font-size:clamp(20px,3.5vw,30px);font-weight:800;color:var(--text-dark);margin-bottom:6px;line-height:1.2;">
+      ${topRecs.length > 0 ? `Use Zigbee Channel <span style="color:var(--electric)">${topRecs[0]}</span>` : 'All channels have some interference'}
+    </div>
+    <div style="font-size:14px;color:var(--text-light);margin-bottom:22px;">${wifiSummary} · ${state.neighbours === 'many' ? 'Dense area — conservative recommendations applied' : state.neighbours === 'few' ? 'Some neighbour interference' : 'Low external interference'}</div>
+
+    <div class="spectrum-wrap">
+      <div class="spectrum-title">2.4GHz Spectrum — WiFi vs Zigbee Channel Overlap</div>
+      <div class="spectrum-svg-wrap">${svgHTML}</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:12px;">
+        <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-mid)"><span style="width:14px;height:14px;background:rgba(232,0,61,0.55);border-radius:3px;display:inline-block;"></span>WiFi interference zone</span>
+        <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-mid)"><span style="width:14px;height:14px;background:rgba(90,154,106,0.6);border-radius:3px;display:inline-block;"></span>Recommended Zigbee channel</span>
+        <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-mid)"><span style="width:14px;height:14px;background:rgba(212,150,10,0.5);border-radius:3px;display:inline-block;"></span>Use with caution</span>
+        <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-mid)"><span style="width:14px;height:14px;background:#D4DCE8;border-radius:3px;display:inline-block;"></span>Avoid (interference)</span>
+      </div>
+    </div>
+
+    <div class="rec-grid">${recCards}</div>
+
+    <div class="divider"></div>
+    ${hubHTML}
+
+    <div class="divider"></div>
+    <div class="nextsteps-title">Learn more on zigbee.com.au</div>
+    <div class="nextsteps-grid">
+      <a class="nextstep-link" href="https://zigbee.com.au/plan/zigbee-channel" target="_blank" rel="noopener">
+        <span class="nextstep-icon">📡</span>
+        <span><span class="nextstep-section">Plan</span>Complete guide to Zigbee channels and interference</span>
+        <span class="nextstep-arrow">→</span>
+      </a>
+      <a class="nextstep-link" href="https://zigbee.com.au/plan/mesh-design" target="_blank" rel="noopener">
+        <span class="nextstep-icon">🕸️</span>
+        <span><span class="nextstep-section">Plan</span>Mesh network design — beyond just the channel</span>
+        <span class="nextstep-arrow">→</span>
+      </a>
+      <a class="nextstep-link" href="https://zigbee.com.au/fix" target="_blank" rel="noopener">
+        <span class="nextstep-icon">🔧</span>
+        <span><span class="nextstep-section">Fix</span>Troubleshooting Zigbee interference issues</span>
+        <span class="nextstep-arrow">→</span>
+      </a>
+    </div>
+
+    <div class="divider"></div>
+    <button class="btn-secondary" onclick="resetTool()">↺ Start Over</button>
+  </div>`;
+}
+
+// ── BUILD SPECTRUM SVG ──
+function buildSpectrum(ranked, wifiChannels, topRecs) {
+  const W = 620, H = 160;
+  const padL = 10, padR = 10;
+  const zigbeeChannels = ranked.map(r => r.ch); // 11–26
+  const totalZch = 16;
+  const slotW = (W - padL - padR) / totalZch;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">`;
+
+  // Draw interference zones first (behind everything)
+  wifiChannels.forEach(wch => {
+    const affectedZch = getWifiInterference(wch);
+    affectedZch.forEach(zch => {
+      const idx = zch - 11;
+      if (idx < 0 || idx >= totalZch) return;
+      const x = padL + idx * slotW;
+      svg += `<rect x="${x}" y="20" width="${slotW}" height="100" fill="rgba(232,0,61,0.18)" rx="0"/>`;
+    });
+  });
+
+  // Draw Zigbee channel bars
+  ranked.forEach((r, idx) => {
+    const x = padL + idx * slotW;
+    const isRec = topRecs.includes(r.ch);
+    const isCh26 = r.ch === 26;
+    let fill;
+    if (r.score === 2) fill = '#D4DCE8';
+    else if (r.score === 1) fill = 'rgba(212,150,10,0.45)';
+    else if (isRec) fill = 'rgba(90,154,106,0.65)';
+    else fill = 'rgba(90,154,106,0.25)';
+
+    const barH = isRec ? 80 : 60;
+    const barY = 120 - barH;
+
+    svg += `<rect x="${x+1}" y="${barY}" width="${slotW-2}" height="${barH}" fill="${fill}" rx="4"/>`;
+
+    // Channel label
+    const labelColor = r.score === 2 ? '#9AACCB' : isRec ? '#1A5A2A' : '#3A4A60';
+    svg += `<text x="${x + slotW/2}" y="145" text-anchor="middle" font-family="Syne,sans-serif" font-size="11" font-weight="700" fill="${labelColor}">${r.ch}</text>`;
+
+    // Star for recommended
+    if (isRec) {
+      svg += `<text x="${x + slotW/2}" y="${barY - 4}" text-anchor="middle" font-size="13">⭐</text>`;
+    }
+    // Warning for ch26
+    if (isCh26 && r.score === 0) {
+      svg += `<text x="${x + slotW/2}" y="${barY - 4}" text-anchor="middle" font-size="11">⚠️</text>`;
+    }
+  });
+
+  // WiFi channel markers at bottom
+  svg += `<text x="${W/2}" y="${H-2}" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="10" fill="#9AACCB">Zigbee channels →</text>`;
+
+  // Interference zone labels
+  wifiChannels.forEach((wch, i) => {
+    const affectedZch = getWifiInterference(wch);
+    if (affectedZch.length === 0) return;
+    const firstIdx = affectedZch[0] - 11;
+    const lastIdx  = affectedZch[affectedZch.length-1] - 11;
+    const xStart = padL + firstIdx * slotW;
+    const xEnd   = padL + (lastIdx + 1) * slotW;
+    const midX   = (xStart + xEnd) / 2;
+    svg += `<text x="${midX}" y="16" text-anchor="middle" font-family="Syne,sans-serif" font-size="10" font-weight="700" fill="#C02030">WiFi ${wch}</text>`;
+    svg += `<line x1="${midX}" y1="18" x2="${midX}" y2="24" stroke="#E8003D" stroke-width="1.5" stroke-dasharray="3,2"/>`;
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
+
+// ── BUILD RECOMMENDATION CARDS ──
+function buildRecCards(topRecs, affected) {
+  let html = '';
+
+  if (state.wifiCh === 'unknown') {
+    html += `<div class="rec-card best">
+      <div class="rec-header">
+        <div class="rec-ch-badge">Ch 25</div>
+        <div class="rec-label">✅ Best choice — unknown WiFi</div>
+      </div>
+      <div class="rec-body">Since we don't know your WiFi channel, <strong>Channel 25</strong> is the safest default. It sits at the high end of the Zigbee spectrum, well away from the most common WiFi channels (1, 6 and 11) used by home routers worldwide. Most Zigbee 3.0 devices support it.</div>
+    </div>
+    <div class="rec-card good">
+      <div class="rec-header">
+        <div class="rec-ch-badge">Ch 26</div>
+        <div class="rec-label">⚠️ Alternative — check device support first</div>
+      </div>
+      <div class="rec-body">Channel 26 has the absolute least WiFi interference — but <strong>some older Zigbee devices don't support it</strong>, particularly older IKEA TRÅDFRI bulbs and some early Xiaomi/Aqara sensors. Only use Channel 26 if all your devices carry the Zigbee 3.0 logo.</div>
+    </div>`;
+    return html;
+  }
+
+  topRecs.forEach((ch, i) => {
+    const isCh26 = ch === 26;
+    const cardClass = i === 0 ? 'best' : 'good';
+    const label = i === 0 ? '✅ Best recommendation' : '✅ Good alternative';
+
+    let body = `<strong>Channel ${ch}</strong> has no direct overlap with your WiFi setup`;
+    if (state.neighbours === 'many') body += ' and sits clear of the most congested part of the spectrum in dense environments';
+    body += '.';
+
+    if (isCh26) {
+      html += `<div class="rec-card good">
+        <div class="rec-header">
+          <div class="rec-ch-badge">Ch 26</div>
+          <div class="rec-label">⚠️ ${i === 0 ? 'Best choice — with one caveat' : 'Alternative — with one caveat'}</div>
+        </div>
+        <div class="rec-body">${body} It has the least WiFi interference of any Zigbee channel — but <strong>some older Zigbee devices don't support Channel 26</strong>, particularly older IKEA TRÅDFRI bulbs and early Xiaomi/Aqara sensors. Only use Channel 26 if all your devices carry the Zigbee 3.0 logo.</div>
+      </div>`;
+    } else {
+      html += `<div class="rec-card ${cardClass}">
+        <div class="rec-header">
+          <div class="rec-ch-badge">Ch ${ch}</div>
+          <div class="rec-label">${label}</div>
+        </div>
+        <div class="rec-body">${body} It's one of the most commonly recommended Zigbee channels worldwide and is supported by virtually all Zigbee devices including older hardware.</div>
+      </div>`;
+    }
+  });
+
+  // Show what to avoid
+  const avoidList = [...affected].sort((a,b) => a-b);
+  if (avoidList.length > 0) {
+    html += `<div class="rec-card avoid">
+      <div class="rec-header">
+        <div class="rec-ch-badge" style="font-size:15px;">Avoid</div>
+        <div class="rec-label">❌ Channels to avoid</div>
+      </div>
+      <div class="rec-body">Based on your WiFi setup, <strong>avoid Zigbee channels ${avoidList.join(', ')}</strong>. These overlap directly with your WiFi frequency and will cause dropped devices, failed pairings, and unreliable automations.</div>
+    </div>`;
+  }
+
+  return html;
+}
+
+// ── BUILD HUB INSTRUCTIONS ──
+function buildHubInstructions(recommendedCh) {
+  const hubs = [
+    {
+      name: 'Home Assistant — ZHA (Zigbee Home Automation)',
+      changeable: true,
+      steps: `<ol>
+        <li>Open Home Assistant and go to <code>Settings → Devices & Services</code></li>
+        <li>Click on your <code>Zigbee Home Automation</code> integration</li>
+        <li>Click <code>Configure</code> then <code>Change channel</code></li>
+        <li>Select Channel <strong>${recommendedCh}</strong> and confirm</li>
+        <li>Your coordinator will migrate all paired devices to the new channel automatically — this may take a few minutes</li>
+      </ol>`,
+      note: 'A channel change in ZHA migrates all devices automatically. Devices that are powered off during the change will reconnect on their own when powered back on.'
+    },
+    {
+      name: 'Home Assistant — Zigbee2MQTT',
+      changeable: true,
+      steps: `<ol>
+        <li>Open the Zigbee2MQTT add-on in Home Assistant</li>
+        <li>Go to <code>Settings → Edit configuration</code> (or edit <code>configuration.yaml</code>)</li>
+        <li>Add or update: <code>channel: ${recommendedCh}</code> under the <code>advanced</code> section</li>
+        <li>Save and restart Zigbee2MQTT</li>
+        <li>All paired devices will migrate to the new channel automatically</li>
+      </ol>`,
+      note: 'After a channel change, devices that were offline will rejoin the network when they next wake up or are power-cycled.'
+    },
+    {
+      name: 'Philips Hue Bridge',
+      changeable: true,
+      steps: `<ol>
+        <li>Open the <strong>Philips Hue</strong> app on your phone</li>
+        <li>Tap <code>Settings</code> (bottom right)</li>
+        <li>Tap your <strong>Hue Bridge</strong></li>
+        <li>Scroll down to <code>Zigbee channel</code></li>
+        <li>Tap <code>Change channel</code> and select Channel <strong>${recommendedCh}</strong></li>
+      </ol>`,
+      note: 'The Hue app will warn you that lights may briefly disconnect during the change. This is normal — they reconnect within a minute.'
+    },
+    {
+      name: 'Aqara Hub (M2, M3, E1)',
+      changeable: true,
+      steps: `<ol>
+        <li>Open the <strong>Aqara Home</strong> app</li>
+        <li>Tap your hub in the device list</li>
+        <li>Tap the <code>⚙️ Settings</code> icon (top right)</li>
+        <li>Select <code>Zigbee Channel</code></li>
+        <li>Choose Channel <strong>${recommendedCh}</strong> and confirm</li>
+      </ol>`,
+      note: 'Aqara devices will automatically rejoin on the new channel. The process takes 1–2 minutes.'
+    },
+    {
+      name: 'Sonoff iHost',
+      changeable: true,
+      steps: `<ol>
+        <li>Open the <strong>iHost web interface</strong> in your browser (find the IP in your router)</li>
+        <li>Go to <code>Settings → Zigbee</code></li>
+        <li>Select <code>Channel</code> and choose Channel <strong>${recommendedCh}</strong></li>
+        <li>Click <code>Save</code> and restart the Zigbee radio if prompted</li>
+      </ol>`
+    },
+    {
+      name: 'Samsung SmartThings Hub',
+      changeable: true,
+      steps: `<ol>
+        <li>Open the <strong>SmartThings</strong> app</li>
+        <li>Tap <code>Menu → Devices</code></li>
+        <li>Select your <strong>SmartThings Hub</strong></li>
+        <li>Tap <code>⚙️ Settings → Zigbee utilities → Change Zigbee channel</code></li>
+        <li>Select Channel <strong>${recommendedCh}</strong></li>
+      </ol>`,
+      note: 'SmartThings will migrate all devices automatically. Devices that are offline during the change will rejoin when powered on.'
+    },
+    {
+      name: 'Hubitat Elevation (C-7 / C-8)',
+      changeable: true,
+      steps: `<ol>
+        <li>Open the <strong>Hubitat admin interface</strong> in your browser</li>
+        <li>Go to <code>Settings → Zigbee Details</code></li>
+        <li>Click <code>Change Zigbee Channel</code></li>
+        <li>Select Channel <strong>${recommendedCh}</strong> and confirm</li>
+      </ol>`,
+      note: 'Hubitat performs an automatic channel migration. All paired devices should follow within a few minutes.'
+    },
+    {
+      name: 'Amazon Echo (4th gen, Plus, Studio)',
+      changeable: false,
+      auto: true,
+      steps: `<p>The Amazon Echo manages its Zigbee channel <strong>automatically</strong> — you cannot manually select a channel. Alexa scans for the least congested channel when the Echo first sets up its Zigbee coordinator and periodically re-evaluates.</p>
+      <p style="margin-top:10px;">If you're experiencing interference, the best approach is to <strong>factory reset the Echo's smart home hub</strong>:</p>
+      <ol>
+        <li>Open the <strong>Alexa app</strong></li>
+        <li>Go to <code>Devices → Echo & Alexa → [your Echo] → Smart Home Devices</code></li>
+        <li>Tap <code>Reset Smart Home Hub</code></li>
+        <li>Re-pair your Zigbee devices — Alexa will select a new channel during setup</li>
+      </ol>`
+    },
+    {
+      name: 'IKEA Dirigera',
+      changeable: false,
+      auto: false,
+      steps: `<p>The IKEA Dirigera does <strong>not currently allow manual Zigbee channel selection</strong>. IKEA manages the channel automatically and has not exposed this setting to users as of the latest firmware.</p>
+      <p style="margin-top:10px;">If you're experiencing interference with your Dirigera, the only option is to <strong>reset and re-pair</strong> the hub and hope it selects a better channel, or contact IKEA support to request this feature be added.</p>`
+    },
+  ];
+
+  let html = `<div class="hub-section">
+    <div class="hub-section-title">How to change the channel on your hub</div>
+    <div class="hub-accordion">`;
+
+  hubs.forEach((hub, i) => {
+    const badgeClass = hub.changeable ? 'changeable' : hub.auto ? 'automatic' : 'locked';
+    const badgeText  = hub.changeable ? 'Can change' : hub.auto ? 'Automatic' : 'Not changeable';
+    html += `
+    <div class="hub-item" id="hub${i}">
+      <button class="hub-toggle" onclick="toggleHub(document.getElementById('hub${i}'))">
+        <span>${hub.name}</span>
+        <span class="hub-toggle-right">
+          <span class="hub-badge ${badgeClass}">${badgeText}</span>
+          <span class="hub-arrow">▼</span>
+        </span>
+      </button>
+      <div class="hub-body">
+        <div class="hub-steps">${hub.steps}</div>
+        ${hub.note ? `<div class="hub-note">💡 ${hub.note}</div>` : ''}
+      </div>
+    </div>`;
+  });
+
+  html += `</div></div>`;
+  return html;
+}
+
+function resetTool() {
+  state.region = null;
+  state.wifiCh = null;
+  state.wifiCh2 = null;
+  state.neighbours = null;
+  state.maxWifi = 11;
+  renderQ1();
+}
+
+// ── INIT ──
+renderQ1();
+</script>
+</body>
+</html>
