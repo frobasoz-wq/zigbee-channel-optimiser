@@ -652,7 +652,7 @@ function renderQ2() {
   document.getElementById('toolArea').innerHTML = `
   <div class="tool-card">
     <div class="card-eyebrow">Step 2 of 4</div>
-    <div class="card-question">What 2.4GHz channel is your router on?</div>
+    <div class="card-question">What 2.4GHz channel is your Wi-Fi router on?</div>
     <div class="card-hint">Select only your <strong>2.4GHz</strong> channel — ignore 5GHz and 6GHz, they don't affect Zigbee. Common home router channels are <strong>1, 6</strong> or <strong>11</strong>.</div>
     <div class="channel-grid">${chButtons}
       <button class="ch-btn${state.wifiCh==='unknown'?' selected':''}"
@@ -686,7 +686,7 @@ function renderQ3() {
   document.getElementById('toolArea').innerHTML = `
   <div class="tool-card">
     <div class="card-eyebrow">Step 3 of 4</div>
-    <div class="card-question">Do you have a second 2.4GHz network?</div>
+    <div class="card-question">Do you have a second 2.4GHz Wi-Fi network?</div>
     <div class="card-hint">This includes guest networks, mesh nodes, or a second router running on a different channel. If you're not sure, choose <strong>No second network</strong>.</div>
     <div class="options-grid cols-1" style="margin-bottom:14px;">
       <button class="opt-btn${state.wifiCh2==='none'?' selected':''}" onclick="selectCh2('none')">
